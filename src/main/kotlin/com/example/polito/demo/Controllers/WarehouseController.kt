@@ -1,5 +1,6 @@
 package com.example.polito.demo.Controllers
 
+import com.example.polito.demo.DTOs.ProductQuantityProjection
 import com.example.polito.demo.DTOs.UpdateProductAvailabilityDTO
 import com.example.polito.demo.DTOs.WarehouseDTO
 import com.example.polito.demo.Services.WarehouseService
@@ -10,6 +11,7 @@ import org.springframework.http.ResponseEntity
 import org.springframework.stereotype.Controller
 import org.springframework.validation.BindingResult
 import org.springframework.web.bind.annotation.*
+import java.util.*
 
 @Controller
 @RequestMapping("/warehouses")
@@ -137,10 +139,16 @@ class WarehouseController {
 
     //Get all products availabilities
     @GetMapping("/productavailability")
-    fun getProductAvailabilities(){
+    fun getProductAvailabilities() : ResponseEntity<Vector<ProductQuantityProjection>> {
 
 
-        warehouseService.getAllProductAvailabilities()
+        var itemVector : Vector<ProductQuantityProjection> = warehouseService.getAllProductAvailabilities()
+
+
+
+        return ResponseEntity(itemVector,HttpStatus.OK)
+
+
 
 
     }
