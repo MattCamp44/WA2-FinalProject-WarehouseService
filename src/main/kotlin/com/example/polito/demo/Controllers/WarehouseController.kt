@@ -140,7 +140,7 @@ class WarehouseController {
     fun getProductAvailabilities(){
 
 
-
+        warehouseService.getAllProductAvailabilities()
 
 
     }

@@ -1,5 +1,6 @@
 package com.example.polito.demo.Services
 
+import com.example.polito.demo.DTOs.ProductQuantityProjection
 import com.example.polito.demo.DTOs.UpdateProductAvailabilityDTO
 import com.example.polito.demo.Domain.ProductInWarehouse
 import com.example.polito.demo.Repositories.ProductInWarehouseRepository
@@ -61,8 +62,30 @@ class WarehouseServiceImpl : WarehouseService {
 
     }
 
+    override fun getAllProductAvailabilities(): Vector<ProductQuantityProjection> {
 
-    override fun checkQuantityOfProducts(productId: Long, quantity: Long): Boolean {
+        var itemVector : Vector<ProductQuantityProjection>
+
+        itemVector = productInWarehouseRepository.getSums()
+
+
+
+        for( item in itemVector )
+            if(item!=null)
+                println(" ${item.productId}  ${item.quantity} ")
+
+
+        return itemVector
+
+
+
+    }
+
+
+
+
+
+    fun checkQuantityOfProducts(productId: Long, quantity: Long): Boolean {
 
         var entriesVector : Vector<ProductInWarehouse> = productInWarehouseRepository.findAllByProductId( productId )
 
@@ -89,7 +112,7 @@ class WarehouseServiceImpl : WarehouseService {
 
     }
 
-    override fun subtractQuantities(productId: Long , quantity: Long ) {
+    fun subtractQuantities(productId: Long , quantity: Long ) {
 
         var entriesVector : Vector<ProductInWarehouse> = productInWarehouseRepository.findAllByProductIdOrderByQuantityDesc(productId)
 
@@ -184,7 +207,7 @@ class WarehouseServiceImpl : WarehouseService {
 
 
     }
-    
+
     //TODO send emails to admins
     fun sendEmailToAdmins(productId: Long, warehouseId: Long){
 

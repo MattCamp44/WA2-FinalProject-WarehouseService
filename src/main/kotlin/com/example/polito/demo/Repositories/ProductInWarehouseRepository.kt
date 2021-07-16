@@ -1,5 +1,6 @@
 package com.example.polito.demo.Repositories
 
+import com.example.polito.demo.DTOs.ProductQuantityProjection
 import com.example.polito.demo.Domain.ProductInWarehouse
 import org.springframework.data.jpa.repository.Query
 import org.springframework.data.repository.CrudRepository
@@ -16,6 +17,13 @@ interface ProductInWarehouseRepository : CrudRepository<ProductInWarehouse, Long
     fun findAllByProductId(productId: Long) : Vector<ProductInWarehouse>
     fun findAllByProductIdOrderByQuantityDesc(productId: Long) : Vector<ProductInWarehouse>
     fun findFirstByProductIdOrderByQuantity(productId: Long) : ProductInWarehouse
+    override fun findAll(): Vector<ProductInWarehouse>
+
+//    @Query( " select productId, sum(quantity) from ProductInWarehouse group by productId" )
+    @Query( " select new com.example.polito.demo.DTOs.ProductQuantityProjection(productId, sum(quantity)) from ProductInWarehouse group by productId" )
+    fun getSums():Vector<ProductQuantityProjection>
+
+
 
     fun countProductInWarehouseByProductIdAndWarehouseID(warehouseID: Long, productId: Long): Int
 
