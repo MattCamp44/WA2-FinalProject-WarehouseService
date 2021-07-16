@@ -23,7 +23,8 @@ interface ProductInWarehouseRepository : CrudRepository<ProductInWarehouse, Long
     @Query( " select new com.example.polito.demo.DTOs.ProductQuantityProjection(productId, sum(quantity)) from ProductInWarehouse group by productId" )
     fun getSums():Vector<ProductQuantityProjection>
 
-
+    @Query( "select sum(quantity) from ProductInWarehouse where productId = :productId" )
+    fun findTotalAvailabilityByProductId(@Param("productId") productId: Long): Long
 
     fun countProductInWarehouseByProductIdAndWarehouseID(warehouseID: Long, productId: Long): Int
 

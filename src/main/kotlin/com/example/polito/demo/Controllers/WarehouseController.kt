@@ -128,9 +128,10 @@ class WarehouseController {
         @NotNull
         @PathVariable
         productID: Long
-    ){
+    ) : ResponseEntity<Long> {
 
 
+        return ResponseEntity( warehouseService.getProductAvailability(productID) , HttpStatus.OK )
 
 
 

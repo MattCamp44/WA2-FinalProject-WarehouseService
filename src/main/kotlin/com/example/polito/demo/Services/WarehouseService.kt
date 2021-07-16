@@ -9,6 +9,7 @@ interface WarehouseService {
 
     fun addProductToWarehouse(updateProductAvailabilityDTO: UpdateProductAvailabilityDTO, productId : Long)
     fun getAllProductAvailabilities(): Vector<ProductQuantityProjection>
+    fun getProductAvailability(productId: Long): Long
 
 
 }

@@ -82,6 +82,13 @@ class WarehouseServiceImpl : WarehouseService {
     }
 
 
+    override fun getProductAvailability(productId: Long): Long {
+
+        return productInWarehouseRepository.findTotalAvailabilityByProductId(productId)
+
+
+    }
+
 
 
 
