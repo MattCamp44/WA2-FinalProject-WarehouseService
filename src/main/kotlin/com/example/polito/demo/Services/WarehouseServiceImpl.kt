@@ -1,8 +1,9 @@
 package com.example.polito.demo.Services
 
-import com.example.polito.demo.DTOs.ProductQuantityProjection
-import com.example.polito.demo.DTOs.UpdateProductAvailabilityDTO
+import com.example.polito.demo.DTOs.*
+import com.example.polito.demo.Domain.OrderInWarehouse
 import com.example.polito.demo.Domain.ProductInWarehouse
+import com.example.polito.demo.Repositories.OrderInWarehouseRepository
 import com.example.polito.demo.Repositories.ProductInWarehouseRepository
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
@@ -16,25 +17,39 @@ class WarehouseServiceImpl : WarehouseService {
     @Autowired
     lateinit var productInWarehouseRepository: ProductInWarehouseRepository
 
-    override fun addProductToWarehouse(updateProductAvailabilityDTO: UpdateProductAvailabilityDTO, productId : Long) {
+    @Autowired
+    lateinit var orderInWarehouseRepository: OrderInWarehouseRepository
 
-        println(productInWarehouseRepository.existsByProductIdAndWarehouseID(productId , updateProductAvailabilityDTO.warehouseId!!))
-        if(productInWarehouseRepository.existsByProductIdAndWarehouseID(productId,updateProductAvailabilityDTO.warehouseId!!)){
+    @Autowired
+    lateinit var mailService: MailService
 
-            println( "Found existing" )
+    override fun addProductToWarehouse(updateProductAvailabilityDTO: UpdateProductAvailabilityDTO) {
 
-            if(updateProductAvailabilityDTO.quantity < 0) {
-                if (checkQuantityOfProducts(productId, Math.abs(updateProductAvailabilityDTO.quantity))) {
-                    subtractQuantities(productId, Math.abs(updateProductAvailabilityDTO.quantity))
-                }
-                else{
+        println(productInWarehouseRepository.existsByProductIdAndWarehouseID(updateProductAvailabilityDTO.productId!! , updateProductAvailabilityDTO.warehouseId!!))
+        if(productInWarehouseRepository.existsByProductIdAndWarehouseID(updateProductAvailabilityDTO.productId!!,updateProductAvailabilityDTO.warehouseId!!)){
 
-                    throw Exception("Not enough items in warehouses")
 
-                }
+
+
+
+            if(updateProductAvailabilityDTO.warehouseId == null)
+                addQuantities(updateProductAvailabilityDTO.productId, Math.abs(updateProductAvailabilityDTO.quantity))
+            else{
+
+                var productInWarehouse : ProductInWarehouse = productInWarehouseRepository.findProductInWarehouseByWarehouseIDAndProductId(updateProductAvailabilityDTO.warehouseId, updateProductAvailabilityDTO.productId!!)
+
+                productInWarehouse.quantity = productInWarehouse.quantity!! + updateProductAvailabilityDTO.quantity
+
+                if(updateProductAvailabilityDTO.alarmQuantity != null)
+                    productInWarehouse.alarmLevel = updateProductAvailabilityDTO.alarmQuantity
+
+                productInWarehouseRepository.save(productInWarehouse)
+
+
+
             }
-            else
-                addQuantities(productId, Math.abs(updateProductAvailabilityDTO.quantity))
+
+
 
             return
 
@@ -48,7 +63,7 @@ class WarehouseServiceImpl : WarehouseService {
             var productInWarehouse : ProductInWarehouse = ProductInWarehouse()
 
             productInWarehouse.alarmLevel = updateProductAvailabilityDTO.alarmQuantity
-            productInWarehouse.productId = productId
+            productInWarehouse.productId = updateProductAvailabilityDTO.productId
             productInWarehouse.warehouseID = updateProductAvailabilityDTO.warehouseId
             productInWarehouse.quantity = updateProductAvailabilityDTO.quantity
 
@@ -61,6 +76,31 @@ class WarehouseServiceImpl : WarehouseService {
 
 
     }
+
+    override fun placeOrderInWarehouse(placeOrderDTO: PlaceOrderDTO) {
+
+        var orderRecords : Vector<OrderInWarehouse>
+
+        var productAvailability = productInWarehouseRepository.findTotalAvailabilityByProductId(placeOrderDTO.productId!!)
+
+        if( productAvailability < placeOrderDTO.quantity!!)
+            throw Exception("Not enough availability")
+
+        orderRecords = subtractQuantities(placeOrderDTO.productId!!, Math.abs(placeOrderDTO.quantity!!))
+
+        for(order in orderRecords){
+
+            order.orderId = placeOrderDTO.orderId
+
+            orderInWarehouseRepository.save(order)
+
+        }
+
+
+
+    }
+
+
 
     override fun getAllProductAvailabilities(): Vector<ProductQuantityProjection> {
 
@@ -89,7 +129,30 @@ class WarehouseServiceImpl : WarehouseService {
 
     }
 
+    override fun getAllWarehouses(): Vector<Long> {
 
+        return productInWarehouseRepository.getAllDistinctWarehouseIds()
+
+    }
+
+    override fun updateAlarmLevel(updateAlarmLevelDTO: UpdateAlarmLevelDTO) {
+
+        var result : ProductInWarehouse? =  productInWarehouseRepository.findByProductIdAndWarehouseID( updateAlarmLevelDTO.productId!! , updateAlarmLevelDTO.warehouseId!! )
+
+        if(result == null)
+            throw Exception("Product not found in warehouse")
+        else{
+
+            result.alarmLevel = updateAlarmLevelDTO.alarmLevel
+
+            productInWarehouseRepository.save(result)
+
+        }
+
+        return
+
+
+    }
 
 
     fun checkQuantityOfProducts(productId: Long, quantity: Long): Boolean {
@@ -119,79 +182,69 @@ class WarehouseServiceImpl : WarehouseService {
 
     }
 
-    fun subtractQuantities(productId: Long , quantity: Long ) {
+
+    fun subtractQuantities(productId: Long , quantity: Long ) : Vector<OrderInWarehouse> {
+
+        var orderRecords : Vector<OrderInWarehouse> = Vector<OrderInWarehouse>()
+
 
         var entriesVector : Vector<ProductInWarehouse> = productInWarehouseRepository.findAllByProductIdOrderByQuantityDesc(productId)
 
-        var counter : Long = 0
+
 
         var tempQuantity = quantity
 
-        for( item in entriesVector ){
+        for( item in entriesVector ) {
 
-            if( item.quantity?.minus(item.alarmLevel!!)!! >= tempQuantity ){
+            if (item.quantity!! >= tempQuantity) {
+
+                var orderRecord: OrderInWarehouse = OrderInWarehouse()
+
+                orderRecord.productId = item.productId
+                orderRecord.warehouseId = item.warehouseID
+                orderRecord.quantity = tempQuantity
+
+                orderRecords.add(orderRecord)
 
                 item.quantity = item.quantity!! - tempQuantity
 
-                counter++
+                tempQuantity = 0L
+
+                if(item.quantity!! < item.alarmLevel!!)
+                    sendEmailToAdmins(item.productId!! , item.warehouseID!!)
+
+                productInWarehouseRepository.save(item)
+
+                println("Last step: taking away $tempQuantity")
 
                 break
 
-            }else{
+            } else {
 
-                item.quantity = item.alarmLevel
-                tempQuantity -= item.quantity?.minus(item.alarmLevel!!)!!
+                var orderRecord: OrderInWarehouse = OrderInWarehouse()
 
-                counter++
+
+                orderRecord.productId = item.productId
+                orderRecord.warehouseId = item.warehouseID
+                orderRecord.quantity = item.quantity
+
+                orderRecords.add(orderRecord)
+
+                tempQuantity -= item.quantity!!
+
+                item.quantity = 0
+
+                sendEmailToAdmins(item.productId!! , item.warehouseID!!)
+
+
+
+                productInWarehouseRepository.save(item)
+
+                println("quantity to take out now is $tempQuantity")
+
 
 
             }
-
-            if(tempQuantity != 0L) {
-
-                for (item in entriesVector) {
-
-                    if(item.quantity!! > tempQuantity){
-
-                        item.quantity = item.quantity?.minus(tempQuantity)
-
-
-
-                        productInWarehouseRepository.save(item)
-
-                        sendEmailToAdmins( productId , item.warehouseID!! )
-
-                        return
-
-
-                    }
-                    else{
-
-                        tempQuantity -= item.quantity!!
-
-                        item.quantity = 0
-
-                        productInWarehouseRepository.save(item)
-
-                        sendEmailToAdmins( productId , item.warehouseID!! )
-
-                    }
-
-
-                }
-
-                return
-            }
-
-            var iteratorVar : Int = 0
-
-            while( iteratorVar++ < counter )
-                productInWarehouseRepository.save(entriesVector[ iteratorVar ])
-
-
-            return
-
-
         }
 
 
@@ -201,8 +254,142 @@ class WarehouseServiceImpl : WarehouseService {
 
 
 
+        return orderRecords
+
 
     }
+
+
+
+//    fun subtractQuantities(productId: Long , quantity: Long ) : Vector<OrderInWarehouse> {
+//
+//        var orderRecords : Vector<OrderInWarehouse> = Vector<OrderInWarehouse>()
+//
+//
+//        var entriesVector : Vector<ProductInWarehouse> = productInWarehouseRepository.findAllByProductIdOrderByQuantityDesc(productId)
+//
+//
+//
+//        var tempQuantity = quantity
+//
+//        for( item in entriesVector ) {
+//
+//            if (item.quantity?.minus(item.alarmLevel!!)!! >= tempQuantity) {
+//
+//                var orderRecord: OrderInWarehouse = OrderInWarehouse()
+//
+//                orderRecord.productId = item.productId
+//                orderRecord.warehouseId = item.warehouseID
+//                orderRecord.quantity = tempQuantity
+//
+//                orderRecords.add(orderRecord)
+//
+//                item.quantity = item.quantity!! - tempQuantity
+//
+//                tempQuantity = 0L
+//
+//
+//
+//                break
+//
+//            } else {
+//
+//                var orderRecord: OrderInWarehouse = OrderInWarehouse()
+//
+//
+//                orderRecord.productId = item.productId
+//                orderRecord.warehouseId = item.warehouseID
+//                orderRecord.quantity = item.quantity?.minus(item.alarmLevel!!)!!
+//
+//                orderRecords.add(orderRecord)
+//
+//                item.quantity = item.alarmLevel
+//                tempQuantity -= item.quantity?.minus(item.alarmLevel!!)!!
+//
+//
+//
+//
+//
+//
+//            }
+//        }
+//
+//            if(tempQuantity != 0L) {
+//
+//                for (item in entriesVector) {
+//
+//                    if(item.quantity!! >= tempQuantity){
+//
+//                        var orderRecord : OrderInWarehouse = OrderInWarehouse()
+//
+//                        orderRecord.productId = item.productId
+//                        orderRecord.warehouseId = item.warehouseID
+//                        orderRecord.quantity = item.quantity!! - tempQuantity
+//
+//                        orderRecords.add(orderRecord)
+//
+//                        item.quantity = item.quantity?.minus(tempQuantity)
+//
+//
+//
+//                        productInWarehouseRepository.save(item)
+//
+//                        sendEmailToAdmins( productId , item.warehouseID!! )
+//
+//
+//
+//
+//                    }
+//                    else{
+//
+//                        var orderRecord : OrderInWarehouse = OrderInWarehouse()
+//
+//                        orderRecord.productId = item.productId
+//                        orderRecord.warehouseId = item.warehouseID
+//                        orderRecord.quantity = item.quantity!!
+//
+//                        orderRecords.add(orderRecord)
+//
+//                        tempQuantity -= item.quantity!!
+//
+//                        item.quantity = 0
+//
+//                        productInWarehouseRepository.save(item)
+//
+//                        sendEmailToAdmins( productId , item.warehouseID!! )
+//
+//                    }
+//
+//
+//                }
+//
+//
+//            }
+//
+//
+//
+//            for(item in entriesVector)
+//                productInWarehouseRepository.save(item)
+//
+//
+//            return orderRecords
+//
+//
+//        }
+
+
+    override fun addQuantityTOProductInWarehouse(addProductQuantityDTO: AddProductQuantityDTO) {
+
+        var productInWarehouse = productInWarehouseRepository.findProductInWarehouseByWarehouseIDAndProductId( addProductQuantityDTO.warehouseId , addProductQuantityDTO.productId )
+
+        if( productInWarehouse == null )
+            throw Exception("Not found")
+
+        productInWarehouse.quantity = productInWarehouse.quantity?.plus(addProductQuantityDTO.quantity)
+
+    }
+
+
 
     fun addQuantities(productId: Long, quantity: Long) {
 
@@ -220,7 +407,11 @@ class WarehouseServiceImpl : WarehouseService {
 
         println("Email sent to admins for product $productId in warehouse $warehouseId")
 
+        mailService.sendMessage( productId , warehouseId )
+
+
     }
+
 
 
 }

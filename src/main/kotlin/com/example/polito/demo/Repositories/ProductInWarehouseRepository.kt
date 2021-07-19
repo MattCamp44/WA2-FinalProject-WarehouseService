@@ -19,6 +19,8 @@ interface ProductInWarehouseRepository : CrudRepository<ProductInWarehouse, Long
     fun findFirstByProductIdOrderByQuantity(productId: Long) : ProductInWarehouse
     override fun findAll(): Vector<ProductInWarehouse>
 
+    fun findByProductIdAndWarehouseID(productId: Long, warehouseID: Long) : ProductInWarehouse?
+
 //    @Query( " select productId, sum(quantity) from ProductInWarehouse group by productId" )
     @Query( " select new com.example.polito.demo.DTOs.ProductQuantityProjection(productId, sum(quantity)) from ProductInWarehouse group by productId" )
     fun getSums():Vector<ProductQuantityProjection>
@@ -31,6 +33,7 @@ interface ProductInWarehouseRepository : CrudRepository<ProductInWarehouse, Long
 
     fun existsByProductIdAndWarehouseID(productId: Long, warehouseID: Long):Boolean
 
-
+    @Query( "select distinct warehouseID from ProductInWarehouse " )
+    fun getAllDistinctWarehouseIds() : Vector<Long>
 
 }

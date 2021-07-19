@@ -1,8 +1,6 @@
 package com.example.polito.demo.Controllers
 
-import com.example.polito.demo.DTOs.ProductQuantityProjection
-import com.example.polito.demo.DTOs.UpdateProductAvailabilityDTO
-import com.example.polito.demo.DTOs.WarehouseDTO
+import com.example.polito.demo.DTOs.*
 import com.example.polito.demo.Services.WarehouseService
 import com.sun.istack.NotNull
 import org.springframework.beans.factory.annotation.Autowired
@@ -21,15 +19,15 @@ class WarehouseController {
     lateinit var warehouseService: WarehouseService
 
     @GetMapping("/warehouses")
-    fun getAllWarehouses() : ResponseEntity<String> {
+    fun getAllWarehouses() : ResponseEntity<Vector<Long>> {
 
 
-
+        var warehouseIdList : Vector<Long> =  warehouseService.getAllWarehouses()
 
 
         println( "Ok" )
 
-        return ResponseEntity<String>(HttpStatus.OK)
+        return ResponseEntity<Vector<Long>>(warehouseIdList,HttpStatus.OK)
 
 
 
@@ -155,22 +153,44 @@ class WarehouseController {
     }
 
 
-
-
-
-    //If quantity > 0
-    //  If product in database -> add quantity
-    //  Else -> add new product to database with quantity AND initialize alarm quantity with alarm quantity in DTO (if NULL alarm quantity = quantity/2)
-    //Else subtract abs(quantity) to previous quantity
-    @PutMapping("/productavailability/{productID}")
-    fun updateProductAvailability(
-
-        @NotNull
-        @PathVariable
-        productID: Long,
+    @PatchMapping("/updateAlarmlevel")
+    fun updateAlarmLevel(
 
         @RequestBody
-        updateProductAvailabilityDTO: UpdateProductAvailabilityDTO,
+        updateAlarmLevelDTO: UpdateAlarmLevelDTO
+
+    ,
+        bindingResult: BindingResult
+
+    ) : ResponseEntity<String> {
+
+        if(bindingResult.hasErrors())
+            return ResponseEntity(HttpStatus.BAD_REQUEST)
+
+        try{
+
+            warehouseService.updateAlarmLevel(updateAlarmLevelDTO)
+
+        }catch (e : Exception){
+
+            if(e.message == "Product not found in warehouse")
+                return ResponseEntity(HttpStatus.NOT_FOUND)
+
+            return ResponseEntity(HttpStatus.INTERNAL_SERVER_ERROR)
+
+        }
+
+        return ResponseEntity(HttpStatus.OK)
+
+    }
+
+
+
+    @PutMapping("/placeOrder")
+    fun placeOrderInWarehouse(
+
+        @RequestBody
+        placeOrderDTO: PlaceOrderDTO,
 
         bindingResult: BindingResult
 
@@ -181,24 +201,13 @@ class WarehouseController {
 
 
         try {
-            warehouseService.addProductToWarehouse(updateProductAvailabilityDTO, productID)
+            warehouseService.placeOrderInWarehouse( placeOrderDTO )
         }catch (e : Exception){
-            //TODO use constant strings...
-            if(e.message == "Not enough items in warehouses"){
 
-                //TODO send errors to internal network
-                sendErrorToInternalNetwork(e)
 
-                return ResponseEntity(e.message,HttpStatus.BAD_REQUEST)
-            }
-            else if(e.message == "Bad updateProductAvailabilityDTO"){
+            sendErrorToInternalNetwork(e)
 
-                sendErrorToInternalNetwork(e)
-
-                return ResponseEntity(e.message,HttpStatus.BAD_REQUEST)
-
-            }
-
+            return ResponseEntity(HttpStatus.BAD_REQUEST)
         }
 
         return ResponseEntity(HttpStatus.OK)
@@ -208,6 +217,68 @@ class WarehouseController {
 
     }
 
+
+    @PostMapping("/productavailability/add")
+    fun addProductAvailability(
+
+        @RequestBody
+        addProductQuantityDTO: AddProductQuantityDTO,
+
+        bindingResult: BindingResult
+
+
+    ): ResponseEntity<String>{
+        try {
+            warehouseService.addQuantityTOProductInWarehouse(addProductQuantityDTO)
+        }catch(e:Exception){
+
+            sendErrorToInternalNetwork(e)
+            return ResponseEntity(HttpStatus.NOT_FOUND)
+
+        }
+
+        return ResponseEntity(HttpStatus.OK)
+
+    }
+
+
+
+    @PostMapping("/productavailability/update")
+    fun addProductToWarehouse(
+
+
+
+        @RequestBody
+        updateProductAvailabilityDTO: UpdateProductAvailabilityDTO,
+
+        bindingResult: BindingResult
+
+
+
+    ){
+
+
+        warehouseService.addProductToWarehouse(updateProductAvailabilityDTO)
+
+
+
+    }
+
+    @PostMapping("confirmorder/{orderId}")
+    fun confirmOrder( @PathVariable @NotNull orderId : Long ){
+
+        //Removes entry from the backup of orders
+
+
+
+    }
+
+
+
+
+    @DeleteMapping("deleteorder/{orderId}")
+
+
     //TODO send errors to internal network
     private fun sendErrorToInternalNetwork(e: Exception) {
 
@@ -216,4 +287,8 @@ class WarehouseController {
     }
 
 
+
+
+
 }
+
