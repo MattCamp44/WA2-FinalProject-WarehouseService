@@ -402,7 +402,7 @@ class WarehouseServiceImpl : WarehouseService {
 
     }
 
-    //TODO send emails to admins
+
     fun sendEmailToAdmins(productId: Long, warehouseId: Long){
 
         println("Email sent to admins for product $productId in warehouse $warehouseId")

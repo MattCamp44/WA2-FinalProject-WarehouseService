@@ -43,6 +43,8 @@ class WarehouseController {
 
     ) : ResponseEntity<String>  {
 
+        //TODO getwarehousebyId
+
         println( "getWareHousesById with Id $warehouseID" )
         return ResponseEntity<String>(HttpStatus.OK)
 
@@ -50,6 +52,10 @@ class WarehouseController {
 
     @PostMapping("/warehouses")
     fun addWarehouse() : ResponseEntity<String> {
+
+
+        //TODO addWarehouse
+
 
         println( "addWareHouse" )
 
@@ -76,6 +82,9 @@ class WarehouseController {
 
     ) : ResponseEntity<String>  {
 
+
+        //TODO updateOrCreateWarehouse
+
         println( "updateOrCreate with Id $warehouseID" )
 
         if(bindingResult.hasErrors())
@@ -96,6 +105,9 @@ class WarehouseController {
 
     ) : ResponseEntity<String>  {
 
+
+        //TODO updateWarehouse
+
         println( "update with Id $warehouseID" )
 
         return ResponseEntity<String>(HttpStatus.OK)
@@ -110,6 +122,8 @@ class WarehouseController {
         @PathVariable
         warehouseID: Long
     ): ResponseEntity<String> {
+
+        //TODO deleteWarehouse
 
         println( "delete with Id $warehouseID" )
 
@@ -274,6 +288,7 @@ class WarehouseController {
 
         //Removes entry from the backup of orders
 
+        //TODO confirmOrder
 
 
     }
@@ -282,12 +297,20 @@ class WarehouseController {
 
 
     @PostMapping("cancelorder/{orderId}")
+    fun cancelOrder(@PathVariable @NotNull orderId : Long){
+
+        //TODO cancelOrder
+
+    }
 
 
-    //TODO send errors to internal network
     private fun sendErrorToInternalNetwork(e: Exception) {
 
+        //TODO send errors to internal network
+
         println("Sent report to internal network")
+
+
 
     }
 

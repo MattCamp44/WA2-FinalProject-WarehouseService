@@ -1,5 +1,34 @@
 # WA2-FinalProject-WarehouseService
 
+##Introduction and general info
+
+All routes names are very arbitrary, it is so because I guess they need to be configured properly
+in the context of the whole architecture. This is up to you.
+Moreover in this code, because of the @RequestMapping(/warehouses) everything starts with
+/warehouses (for example the first endpoint is triggered with /warehouses/warehouses)
+
+All /warehouse endpoints that are listed in the specifications are basically not implemented
+It is really confusing because these functionalities have nothing to do with what actually the service
+is supposed to do.
+So do what you want with these endpoints, but know that they do not really make sense in
+this context...
+
+The main functionalities to be implemented for the service to work are :
+- 1
+POST/confirmorder/{orderId} : not implemented
+POST/cancelorder/{orderID} : not implemented
+that support the rollback of the placeOrder transactions
+  - 2
+  Fetching the admin emails from the service that owns the authentication service. Also putting the code 
+    responsible for fetching and sending the emails inside a coroutine would be nice, because otherwise the 
+    /placeOrder route takes very long to complete.
+    -> implementing mailServiceimpl.retrieveAdminEmails()
+    
+- 3
+the logic to send internal errors -> implementing WarehouseController.sendErrorToInternalNetwork
+
+
+
 
 ##Routes
 

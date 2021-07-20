@@ -16,7 +16,7 @@ class MailServiceImpl : MailService {
 
     override fun sendMessage( productId: Long , warehouseId : Long) {
 
-        //TODO make a coroutine to retrieve and send emails?
+        //Maybe make a coroutine to retrieve and send emails?
 
         var adminEmails : Vector<String> = retrieveAdminEmails()
 
@@ -47,7 +47,7 @@ class MailServiceImpl : MailService {
 
     fun retrieveAdminEmails() : Vector<String> {
 
-        //TODO make http request
+        //TODO retrieve admin emails from other service
         var mailvector : Vector<String> = Vector<String>()
         mailvector.add("webapp2confirmation@gmail.com")
         return mailvector
