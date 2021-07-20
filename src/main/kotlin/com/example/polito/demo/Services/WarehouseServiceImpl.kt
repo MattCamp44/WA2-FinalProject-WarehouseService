@@ -23,49 +23,49 @@ class WarehouseServiceImpl : WarehouseService {
     @Autowired
     lateinit var mailService: MailService
 
-    override fun addProductToWarehouse(updateProductAvailabilityDTO: UpdateProductAvailabilityDTO) {
+    override fun addProductToWarehouse(addProductDTO: AddProductDTO) {
 
-        println(productInWarehouseRepository.existsByProductIdAndWarehouseID(updateProductAvailabilityDTO.productId!! , updateProductAvailabilityDTO.warehouseId!!))
-        if(productInWarehouseRepository.existsByProductIdAndWarehouseID(updateProductAvailabilityDTO.productId!!,updateProductAvailabilityDTO.warehouseId!!)){
-
-
+        println(productInWarehouseRepository.existsByProductIdAndWarehouseID(addProductDTO.productId!! , addProductDTO.warehouseId!!))
+        if(productInWarehouseRepository.existsByProductIdAndWarehouseID(addProductDTO.productId!!,addProductDTO.warehouseId!!)){
 
 
 
-            if(updateProductAvailabilityDTO.warehouseId == null)
-                addQuantities(updateProductAvailabilityDTO.productId, Math.abs(updateProductAvailabilityDTO.quantity))
-            else{
+            throw Exception("Product already exists in warehouse")
 
-                var productInWarehouse : ProductInWarehouse = productInWarehouseRepository.findProductInWarehouseByWarehouseIDAndProductId(updateProductAvailabilityDTO.warehouseId, updateProductAvailabilityDTO.productId!!)
-
-                productInWarehouse.quantity = productInWarehouse.quantity!! + updateProductAvailabilityDTO.quantity
-
-                if(updateProductAvailabilityDTO.alarmQuantity != null)
-                    productInWarehouse.alarmLevel = updateProductAvailabilityDTO.alarmQuantity
-
-                productInWarehouseRepository.save(productInWarehouse)
-
-
-
-            }
-
-
-
-            return
+//            if(addProductDTO.warehouseId == null)
+//                addQuantities(addProductDTO.productId, Math.abs(addProductDTO.quantity))
+//            else{
+//
+//                var productInWarehouse : ProductInWarehouse = productInWarehouseRepository.findProductInWarehouseByWarehouseIDAndProductId(addProductDTO.warehouseId, addProductDTO.productId!!)
+//
+//                productInWarehouse.quantity = productInWarehouse.quantity!! + addProductDTO.quantity
+//
+//                if(addProductDTO.alarmQuantity != null)
+//                    productInWarehouse.alarmLevel = addProductDTO.alarmQuantity
+//
+//                productInWarehouseRepository.save(productInWarehouse)
+//
+//
+//
+//            }
+//
+//
+//
+//            return
 
         }
         else{
 
-            if(updateProductAvailabilityDTO.quantity == null || updateProductAvailabilityDTO.alarmQuantity == null ||
-                    updateProductAvailabilityDTO.warehouseId == null)
+            if(addProductDTO.quantity == null || addProductDTO.alarmQuantity == null ||
+                    addProductDTO.warehouseId == null)
                         throw Exception("Bad updateProductAvailabilityDTO")
 
             var productInWarehouse : ProductInWarehouse = ProductInWarehouse()
 
-            productInWarehouse.alarmLevel = updateProductAvailabilityDTO.alarmQuantity
-            productInWarehouse.productId = updateProductAvailabilityDTO.productId
-            productInWarehouse.warehouseID = updateProductAvailabilityDTO.warehouseId
-            productInWarehouse.quantity = updateProductAvailabilityDTO.quantity
+            productInWarehouse.alarmLevel = addProductDTO.alarmQuantity
+            productInWarehouse.productId = addProductDTO.productId
+            productInWarehouse.warehouseID = addProductDTO.warehouseId
+            productInWarehouse.quantity = addProductDTO.quantity
 
             productInWarehouseRepository.save( productInWarehouse )
 

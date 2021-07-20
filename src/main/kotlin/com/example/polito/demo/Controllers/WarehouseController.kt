@@ -243,13 +243,13 @@ class WarehouseController {
 
 
 
-    @PostMapping("/productavailability/update")
+    @PostMapping("/product/add")
     fun addProductToWarehouse(
 
 
 
         @RequestBody
-        updateProductAvailabilityDTO: UpdateProductAvailabilityDTO,
+        addProductDTO: AddProductDTO,
 
         bindingResult: BindingResult
 
@@ -258,7 +258,12 @@ class WarehouseController {
     ){
 
 
-        warehouseService.addProductToWarehouse(updateProductAvailabilityDTO)
+        try{
+            warehouseService.addProductToWarehouse(addProductDTO)
+        }
+        catch(e:Exception){
+            sendErrorToInternalNetwork(e)
+        }
 
 
 
@@ -276,7 +281,7 @@ class WarehouseController {
 
 
 
-    @DeleteMapping("deleteorder/{orderId}")
+    @PostMapping("cancelorder/{orderId}")
 
 
     //TODO send errors to internal network

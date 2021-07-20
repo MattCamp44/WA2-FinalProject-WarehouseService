@@ -6,7 +6,7 @@ import java.util.*
 
 interface WarehouseService {
 
-    fun addProductToWarehouse(updateProductAvailabilityDTO: UpdateProductAvailabilityDTO)
+    fun addProductToWarehouse(addProductDTO: AddProductDTO)
     fun getAllProductAvailabilities(): Vector<ProductQuantityProjection>
     fun getProductAvailability(productId: Long): Long
     fun getAllWarehouses(): Vector<Long>
