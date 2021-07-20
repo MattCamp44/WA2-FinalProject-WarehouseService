@@ -18,7 +18,7 @@ The main functionalities to be implemented for the service to work are :
 POST/confirmorder/{orderId} : not implemented
 POST/cancelorder/{orderID} : not implemented
 that support the rollback of the placeOrder transactions
-  - 2
+- 2
   Fetching the admin emails from the service that owns the authentication service. Also putting the code 
     responsible for fetching and sending the emails inside a coroutine would be nice, because otherwise the 
     /placeOrder route takes very long to complete.
@@ -27,7 +27,10 @@ that support the rollback of the placeOrder transactions
 - 3
 the logic to send internal errors -> implementing WarehouseController.sendErrorToInternalNetwork
 
+Anyway, I have listed all that needs to be done in TODOs, so you can
+easily open the "TODO" tab below and go directly where you should write code
 
+For requests bodies for each route, please check the corresponding DTO
 
 
 ##Routes
